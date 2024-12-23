@@ -6,7 +6,8 @@
     "dev": "concurrently \"next dev\" \"make-agent dev -p 3000\"",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "pub": "wrangler deploy"
   },
   "engines": {
     "node": ">=18",
@@ -30,6 +31,7 @@
     "make-agent": "0.0.25",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^3.99.0"
   }
 }

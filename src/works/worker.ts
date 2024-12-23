@@ -1,0 +1,73 @@
+/* eslint-disable import/no-anonymous-default-export */
+import { 
+  handleGetBlockchains, 
+  handleTwitter, 
+  handleReddit, 
+  handleCreateTransaction,
+  handleGetPairs,
+  handleCreateDCA,
+  handleAIPlugin
+} from './handlers';
+
+export interface Env {
+  BITTE_KEY?: string;
+  BITTE_CONFIG?: string;
+  NEAR_ENV?: string;
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    const path = url.pathname;
+
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version',
+      'Access-Control-Allow-Credentials': 'true'
+    };
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: corsHeaders
+      });
+    }
+
+    try {
+      switch (path) {
+        case '/api/ai-plugin':
+        case '/.well-known/ai-plugin.json':
+          return await handleAIPlugin(request, corsHeaders, env);
+        case '/api/tools/get-pairs':
+          return await handleGetPairs(request, corsHeaders, env);
+        case '/api/tools/create-dca':
+          return await handleCreateDCA(request, corsHeaders, env);
+        case '/api/tools/get-blockchains':
+          return await handleGetBlockchains(request, corsHeaders);
+        case '/api/tools/twitter':
+          return await handleTwitter(request, corsHeaders);
+        case '/api/tools/reddit':
+          return await handleReddit(request, corsHeaders);
+        case '/api/tools/create-transaction':
+          return await handleCreateTransaction(request, corsHeaders);
+        default:
+          return new Response('Not Found', { 
+            status: 404,
+            headers: corsHeaders
+          });
+      }
+    } catch (err) {
+      console.error('Error handling request:', err);
+      return new Response(
+        JSON.stringify({ error: 'Internal Server Error' }), 
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
+        }
+      );
+    }
+  }
+}; 
