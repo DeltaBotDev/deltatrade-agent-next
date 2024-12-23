@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "deploy": "wrangler deploy && make-agent deploy"
+    "deploy": "wrangler deploy && make-agent deploy -u https://agent-api.deltatrade.ai"
   },
 
   "dependencies": {

@@ -4,6 +4,7 @@ import { Env } from './worker';
 
 export async function handleAIPlugin(request: Request, corsHeaders: any, env: Env) {
     try {
+      console.log("handleAIPlugin",env);
       const key = JSON.parse(env.BITTE_KEY || "{}");
       const config = JSON.parse(env.BITTE_CONFIG || "{}");
   
