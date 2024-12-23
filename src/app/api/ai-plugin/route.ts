@@ -20,7 +20,7 @@ export async function GET() {
         },
         servers: [
             {
-                url: config.url||"https://api.deltatrade.ai",
+                url: config.url||"https://agent-api.deltatrade.ai",
             },
         ],
         "x-mb": {
