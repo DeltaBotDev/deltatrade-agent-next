@@ -7,7 +7,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
       console.log("handleAIPlugin",env);
       const key = JSON.parse(env.BITTE_KEY || "{}");
       const config = JSON.parse(env.BITTE_CONFIG || "{}");
-  
+      console.log("key",key);
       if (!key?.accountId) {
         console.error("no account");
       }
