@@ -1,40 +1,40 @@
-import { NextResponse } from "next/server";
+import DeltaTradeSDK from '@delta-trade/core';
+import { Env } from './worker';
 
-export const runtime = 'edge';
 
-
-const key = JSON.parse(process.env.BITTE_KEY || "{}");
-const config = JSON.parse(process.env.BITTE_CONFIG || "{}");
-
-if (!key?.accountId) {
-    console.error("no account");
-}
-
-export async function GET() {
-    const pluginData = {
+export async function handleAIPlugin(request: Request, corsHeaders: any, env: Env) {
+    try {
+      const key = JSON.parse(env.BITTE_KEY || "{}");
+      const config = JSON.parse(env.BITTE_CONFIG || "{}");
+  
+      if (!key?.accountId) {
+        console.error("no account");
+      }
+  
+      const pluginData = {
         openapi: "3.0.0",
         info: {
-            title: "Delta Trade DCA Bot",
-            description: "API for creating and managing DCA trading bots on NEAR",
-            version: "1.0.0",
+          title: "Delta Trade DCA Bot",
+          description: "API for creating and managing DCA trading bots on NEAR",
+          version: "1.0.0",
         },
         servers: [
-            {
-                url: config.url||"https://agent-api.deltatrade.ai",
-            },
+          {
+            url: config.url,
+          },
         ],
         "x-mb": {
-            "account-id": key.accountId,
-            assistant: {
-                name: "Delta Trade DCA Assistant",
-                description: "An assistant that helps users create and manage DCA trading strategies on NEAR",
-                instructions: "You help users set up Dollar Cost Averaging (DCA) trading strategies on NEAR. Use the tools to create DCA vaults and provide trading information.",
-                tools: [
-                    { type: "create-dca" },
-                    { type: "get-pairs" }
-                ],
-                image:'https://assets.deltatrade.ai/assets/img/logo-b.svg'
-            },
+          "account-id": key.accountId,
+          assistant: {
+            name: "Delta Trade DCA Assistant",
+            description: "An assistant that helps users create and manage DCA trading strategies on NEAR",
+            instructions: "You help users set up Dollar Cost Averaging (DCA) trading strategies on NEAR. Use the tools to create DCA vaults and provide trading information.",
+            tools: [
+              { type: "create-dca" },
+              { type: "get-pairs" }
+            ],
+            image: 'https://assets.deltatrade.ai/assets/img/logo-b.svg'
+          },
         },
         paths: {
             "/api/tools/create-dca": {
@@ -597,7 +597,285 @@ export async function GET() {
                 }
             }
         },
-    };
+      };
+  
+      return new Response(
+        JSON.stringify(pluginData),
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error in AI Plugin:', error);
+      return new Response(
+        JSON.stringify({ error: 'Internal server error' }), 
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
+        }
+      );
+    }
+  } 
 
-    return NextResponse.json(pluginData);
+function initSdk(accountId?: string) {
+  return DeltaTradeSDK.initEnv({
+    chain: 'near',
+    network: 'mainnet',
+    accountId: accountId,
+  });
+}
+
+
+export async function handleGetPairs(request: Request, corsHeaders: any) {
+    try {
+      const url = new URL(request.url);
+      const type = url.searchParams.get('type') || 'dca' as any ;
+      
+      const sdk = initSdk();
+      const pairs = await sdk.getPairs({ type });
+  
+      return new Response(
+        JSON.stringify({ pairs }), 
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
+        }
+      );
+    } catch (error: any) {
+      console.error(error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch trading pairs' }), 
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
+        }
+      );
+    }
+  }
+  
+  export async function handleCreateDCA(request: Request, corsHeaders: any) {
+    try {
+      if (request.method !== 'POST') {
+        return new Response(
+          JSON.stringify({ error: 'Method not allowed' }), 
+          {
+            status: 405,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders
+            }
+          }
+        );
+      }
+
+      const headersList = request.headers;
+      const mbMetadata = JSON.parse(headersList.get('mb-metadata') || '{}');
+      const accountId = mbMetadata?.accountData?.accountId || 'near';
+      
+      const createParams = await request.json();
+      const sdk = initSdk(accountId);
+  
+      const errors = await sdk.validateDCAVaultParams(createParams);
+      if (errors) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Parameter validation failed', 
+            details: errors 
+          }), 
+          {
+            status: 400,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders
+            }
+          }
+        );
+      }
+  
+      const transaction = await sdk.createDCAVault(createParams);
+  
+      return new Response(
+        JSON.stringify({
+          status: 'success',
+          transaction,
+          vaultParams: createParams
+        }), 
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
+        }
+      );
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Failed to create DCA vault', 
+          details: error.message 
+        }), 
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
+        }
+      );
+    }
+  }
+  
+  
+
+export async function handleGetBlockchains(request: Request, corsHeaders: any) {
+  const blockchains = [
+    'Bitcoin', 'Ethereum', 'Cardano', 'Polkadot', 'Solana',
+    'Avalanche', 'Binance Smart Chain', 'Tezos', 'Algorand',
+    'Cosmos', 'Near', 'Aptos', 'Sui', 'Starknet', 'ZKsync',
+    'Scroll', 'Optimism', 'Arbitrum'
+  ];
+
+  const randomBlockchains = blockchains
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 3);
+
+  return new Response(
+    JSON.stringify({ blockchains: randomBlockchains }), 
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders
+      }
+    }
+  );
+}
+
+export async function handleTwitter(request: Request, corsHeaders: any) {
+  const url = new URL(request.url);
+  const text = url.searchParams.get('text');
+  const shareUrl = url.searchParams.get('url');
+  const hashtags = url.searchParams.get('hashtags');
+  const via = url.searchParams.get('via');
+
+  if (!text) {
+    return new Response(
+      JSON.stringify({ error: 'Text parameter is required' }), 
+      {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      }
+    );
+  }
+
+  let twitterIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+  if (shareUrl) twitterIntentUrl += `&url=${encodeURIComponent(shareUrl)}`;
+  if (hashtags) twitterIntentUrl += `&hashtags=${encodeURIComponent(hashtags)}`;
+  if (via) twitterIntentUrl += `&via=${encodeURIComponent(via)}`;
+
+  return new Response(
+    JSON.stringify({ twitterIntentUrl }), 
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders
+      }
+    }
+  );
+}
+
+export async function handleReddit(request: Request, corsHeaders: any) {
+  try {
+    const response = await fetch('https://www.reddit.com/.json');
+    if (!response.ok) {
+      throw new Error('Failed to fetch Reddit frontpage');
+    }
+    const data = await response.json();
+    
+    const posts = data.data.children.map((child: any) => ({
+      title: child.data.title,
+      author: child.data.author,
+      subreddit: child.data.subreddit,
+      score: child.data.score,
+      num_comments: child.data.num_comments,
+      url: `https://www.reddit.com${child.data.permalink}`,
+    }));
+
+    return new Response(
+      JSON.stringify({ posts }), 
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      }
+    );
+  } catch (error: any) {
+    console.error(error);
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch Reddit frontpage' }), 
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      }
+    );
+  }
+}
+
+export async function handleCreateTransaction(request: Request, corsHeaders: any) {
+  const url = new URL(request.url);
+  const receiverId = url.searchParams.get('receiverId');
+  const amount = url.searchParams.get('amount');
+
+  if (!receiverId || !amount) {
+    return new Response(
+      JSON.stringify({ error: 'receiverId and amount are required parameters' }), 
+      {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      }
+    );
+  }
+
+  const amountInYoctoNEAR = Number(amount) * (10**24);
+
+  const transactionPayload = {
+    receiverId,
+    actions: [
+      {
+        type: 'Transfer',
+        params: {
+          deposit: amountInYoctoNEAR,
+        },
+      },
+    ],
+  };
+
+  return new Response(
+    JSON.stringify({ transactionPayload }), 
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders
+      }
+    }
+  );
 }

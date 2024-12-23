@@ -39,9 +39,9 @@ export default {
         case '/.well-known/ai-plugin.json':
           return await handleAIPlugin(request, corsHeaders, env);
         case '/api/tools/get-pairs':
-          return await handleGetPairs(request, corsHeaders, env);
+          return await handleGetPairs(request, corsHeaders);
         case '/api/tools/create-dca':
-          return await handleCreateDCA(request, corsHeaders, env);
+          return await handleCreateDCA(request, corsHeaders);
         case '/api/tools/get-blockchains':
           return await handleGetBlockchains(request, corsHeaders);
         case '/api/tools/twitter':
