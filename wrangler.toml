@@ -3,6 +3,9 @@ main = "src/works/worker.ts"
 compatibility_date = "2024-12-23"
 compatibility_flags = ["nodejs_compat"]
 
+[observability.logs]
+enabled = true
+
 [vars]
 NEAR_ENV = "mainnet"
 BITTE_KEY = '{"accountId":"jimi_h.near","publicKey":"ed25519:4aSdk8utbTG5po8CEXDYDCEiPBfynXg76fEqY3eAmQb2","signature":"CPfN80ItRzdVnsJmw4MHRhlAE9wVK+Rmncm4LufMIXtEyHhWUAu05W/pTRENrmSQOOR0ONLzBRC4pSuYbGHhDA==","message":"Register Bitte Agent!","nonce":"1aac3b6adeb1b3a38cd45d4e6fa210b4","recipient":"jimi_h.near","callbackUrl":"https://wallet.bitte.ai/success","state":"default"}'
