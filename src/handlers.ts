@@ -131,6 +131,16 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
                                 minimum: 0
                             },
                             description: "Highest price limit for trading"
+                        },
+                        {
+                            name:"startTime",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string",
+                                format: "date-time"
+                            },
+                            description: "Start time for trading"
                         }
                     ],
                     responses: {
@@ -687,6 +697,10 @@ export async function handleGetPairs(request: Request, corsHeaders: any) {
       const createParams = await request.json();
       const sdk = initSdk(accountId);
       console.log("createParams",createParams);
+      if(!createParams.startTime){
+        // default to 5 minutes from now
+        createParams.startTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+      }
   
       const errors = await sdk.validateDCAVaultParams(createParams);
       console.log("validateDCAVaultParams errors",errors);
