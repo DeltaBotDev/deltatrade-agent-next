@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { utils } from 'near-api-js';
 
 export const runtime = 'edge';
 
@@ -14,7 +13,7 @@ export async function GET(request: Request) {
     }
 
     // Convert amount to yoctoNEAR (1 NEAR = 10^24 yoctoNEAR)
-    const amountInYoctoNEAR = utils.format.parseNearAmount(amount);
+    const amountInYoctoNEAR = Number(amount)*(10**24);
 
     if (!amountInYoctoNEAR) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
