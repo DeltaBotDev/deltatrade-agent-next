@@ -686,9 +686,12 @@ export async function handleGetPairs(request: Request, corsHeaders: any) {
       
       const createParams = await request.json();
       const sdk = initSdk(accountId);
+      console.log("createParams",createParams);
   
       const errors = await sdk.validateDCAVaultParams(createParams);
+      console.log("validateDCAVaultParams errors",errors);
       if (errors) {
+        console.error("errors",errors);
         return new Response(
           JSON.stringify({ 
             error: 'Parameter validation failed', 
@@ -720,6 +723,7 @@ export async function handleGetPairs(request: Request, corsHeaders: any) {
         }
       );
     } catch (error: any) {
+      console.error("error",error);
       return new Response(
         JSON.stringify({ 
           error: 'Failed to create DCA vault', 
