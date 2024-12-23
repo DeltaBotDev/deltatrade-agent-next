@@ -8,6 +8,10 @@
     "start": "next start",
     "lint": "next lint"
   },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  },
   "dependencies": {
     "@delta-trade/core": "^0.0.7",
     "near-api-js": "4.0.3",
