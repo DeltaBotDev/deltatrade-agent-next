@@ -47,17 +47,20 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
                - Explain how DCA reduces price volatility risk
                - Help calculate potential investment outcomes
 
-            4. Important: Always confirm plan details before creation
-               Show a summary like this:
-               "Please confirm your DCA plan:
+            4. Important: Always explain the two-step process
+               Step 1: Review the plan details:
+               "Here's your proposed DCA plan:
                - Trading pair: NEAR/USDC
                - Investment amount: [X] USDC per time
                - Frequency: [Weekly/Monthly]
                - Duration: [X] weeks/months
                - Total investment: [X] USDC
-               - Current NEAR price: [X] USDC
-               
-               Would you like to proceed with this plan?"
+               - Current NEAR price: [X] USDC"
+
+               Step 2: Explain next steps:
+               "If these details look correct, I'll generate a transaction for you to sign.
+               You'll need to approve this transaction in your NEAR wallet to start the DCA plan.
+               The plan will only begin after you sign the transaction."
 
             5. Risk awareness
                - Explain market volatility
@@ -71,9 +74,10 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
 
             Always:
             1. Check current prices first
-            2. Confirm plan details before creation
-            3. Explain investment strategy clearly
-            4. Be responsive to user's questions`,
+            2. Show plan details clearly
+            3. Explain that user needs to sign transaction
+            4. Remind that plan starts only after transaction is signed
+            5. Be ready to help if transaction signing fails`,
           tools: [
             { type: 'get-pairs' },
             { type: 'get-pair-prices' },
