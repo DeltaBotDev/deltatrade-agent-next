@@ -250,94 +250,69 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
           post: {
             operationId: 'get-dca-transactions',
             description:
-              'Get transaction payloads for creating a DCA (Dollar Cost Averaging) plan on Delta Trade. Returns the necessary transactions that need to be signed and executed to set up the DCA plan.',
-            parameters: [
-              {
-                name: 'pairId',
-                in: 'query',
-                schema: {
-                  type: 'string',
-                  default:
-                    'wrap.near:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1',
+              'Get transaction payloads for creating a DCA (Dollar Cost Averaging) plan on Delta Trade.',
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    required: ['tradeType', 'intervalTime', 'singleAmountIn', 'count'],
+                    properties: {
+                      pairId: {
+                        type: 'string',
+                        default:
+                          'wrap.near:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1',
+                        description: 'Trading pair ID (defaults to NEAR/USDC)',
+                      },
+                      tradeType: {
+                        type: 'string',
+                        enum: ['buy', 'sell'],
+                        default: 'buy',
+                        description:
+                          'Trading direction. AI will analyze user intent to determine whether to buy or sell. Defaults to "buy" if ambiguous',
+                      },
+                      intervalTime: {
+                        type: 'number',
+                        default: 604800,
+                        description:
+                          'Time interval between each investment in seconds. AI will convert user-friendly terms (daily, weekly, monthly) to seconds. Common intervals: daily (86400), weekly (604800), monthly (2592000)',
+                      },
+                      singleAmountIn: {
+                        type: 'number',
+                        minimum: 10,
+                        default: 10,
+                        description:
+                          'Amount to invest per time. For buy orders, amount is in quote token (e.g., USDC). For sell orders, amount is in base token (e.g., NEAR)',
+                      },
+                      count: {
+                        type: 'integer',
+                        minimum: 5,
+                        maximum: 52,
+                        default: 5,
+                        description:
+                          'Number of times the DCA order will execute. Each execution will invest singleAmountIn at intervalTime intervals',
+                      },
+                      name: {
+                        type: 'string',
+                        description:
+                          'Name for the DCA plan. AI will generate a creative name if not provided, based on the trading strategy and parameters (e.g., "Weekly NEAR Accumulation Plan")',
+                      },
+                      lowestPrice: {
+                        type: 'number',
+                        description:
+                          'Optional lowest price limit. If not provided, AI will suggest based on current market price and historical data',
+                      },
+                      highestPrice: {
+                        type: 'number',
+                        description:
+                          'Optional highest price limit. If not provided, AI will suggest based on current market price and historical data',
+                      },
+                    },
+                  },
                 },
-                description: 'Trading pair ID (defaults to NEAR/USDC)',
               },
-              {
-                name: 'tradeType',
-                in: 'query',
-                required: true,
-                schema: {
-                  type: 'string',
-                  enum: ['buy', 'sell'],
-                  default: 'buy',
-                },
-                description:
-                  'Specifies the trading direction - "buy" to acquire base token using quote token, or "sell" to exchange base token for quote token (defaults to "buy")',
-              },
-              {
-                name: 'intervalTime',
-                in: 'query',
-                required: true,
-                schema: {
-                  type: 'number',
-                  default: 604800,
-                  description:
-                    'Time interval between each investment in seconds. Defaults to weekly (604800 seconds). Common intervals: daily (86400), weekly (604800), monthly (2592000)',
-                },
-              },
-              {
-                name: 'singleAmountIn',
-                in: 'query',
-                required: true,
-                schema: {
-                  type: 'number',
-                  minimum: 10,
-                  default: 10,
-                  description:
-                    'Amount to invest per time. For buy orders, amount is in quote token (e.g., USDC). For sell orders, amount is in base token (e.g., NEAR)',
-                },
-              },
-              {
-                name: 'count',
-                in: 'query',
-                required: true,
-                schema: {
-                  type: 'integer',
-                  minimum: 5,
-                  maximum: 52,
-                  default: 5,
-                },
-                description:
-                  'Number of times the DCA order will execute. Each execution will invest singleAmountIn at intervalTime intervals',
-              },
-              {
-                name: 'lowestPrice',
-                in: 'query',
-                schema: {
-                  type: 'number',
-                },
-                description:
-                  'Optional lowest price limit. If not provided, AI will suggest based on current market price',
-              },
-              {
-                name: 'highestPrice',
-                in: 'query',
-                schema: {
-                  type: 'number',
-                },
-                description:
-                  'Optional highest price limit. If not provided, AI will suggest based on current market price',
-              },
-              {
-                name: 'name',
-                in: 'query',
-                schema: {
-                  type: 'string',
-                },
-                description:
-                  'Optional name for the DCA plan. AI will generate a creative name if not provided',
-              },
-            ],
+            },
             responses: {
               '200': {
                 description: 'Returns an array of transactions that need to be signed and executed',
