@@ -28,7 +28,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
       'x-mb': {
         'account-id': key.accountId,
         assistant: {
-          name: 'Delta Trade DCA Helper1',
+          name: 'Delta Trade DCA Helper2',
           description:
             'A friendly assistant that helps you set up DCA plans to buy NEAR and other tokens',
           instructions: `You are a DCA (Dollar-Cost Averaging) trading assistant. Your task is to help users create DCA plans.
@@ -500,6 +500,7 @@ export async function handleCreateDCA(request: Request, corsHeaders: any) {
 
     return handleResponse(transaction, corsHeaders);
   } catch (error: any) {
+    console.error('Error in handleCreateDCA', error?.message);
     return handleError(error, corsHeaders, 500);
   }
 }
