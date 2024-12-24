@@ -20,7 +20,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
       info: {
         title: 'Delta Trade DCA Bot',
         description: 'API for creating and managing DCA trading bots on NEAR',
-        version: '1.0.3',
+        version: '1.0.0',
       },
       servers: [
         {
@@ -395,7 +395,6 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
     };
 
     const etag = generateETag(pluginData);
-
     const ifNoneMatch = request.headers.get('If-None-Match');
 
     if (ifNoneMatch === etag) {
@@ -486,7 +485,7 @@ export async function handleCreateDCA(request: Request, corsHeaders: any) {
 }
 
 function handleResponse(response: any, corsHeaders: any, status: number = 200) {
-  return new Response(JSON.stringify(response), {
+  return new Response(status === 304 ? null : JSON.stringify(response), {
     status,
     headers: {
       'Content-Type': 'application/json',
