@@ -287,106 +287,67 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
             ],
             responses: {
               '200': {
-                description: 'DCA plan created successfully',
+                description: 'Successful response',
                 content: {
                   'application/json': {
                     schema: {
-                      type: 'object',
-                      properties: {
-                        status: {
-                          type: 'string',
-                          description: 'Status of the DCA plan creation',
-                          enum: ['success'],
-                        },
-                        transaction: {
-                          type: 'object',
-                          description: 'Transaction details for execution',
-                          properties: {
-                            type: {
-                              type: 'string',
-                              enum: ['generate-transaction'],
-                              description: 'Type of action to perform',
-                            },
-                            transactions: {
-                              type: 'array',
-                              items: {
-                                type: 'object',
-                                properties: {
-                                  receiverId: {
-                                    type: 'string',
-                                    description:
-                                      'The account ID of the contract that will receive the transaction',
-                                  },
-                                  signerId: {
-                                    type: 'string',
-                                    description: 'The account ID that will sign the transaction',
-                                  },
-                                  actions: {
-                                    type: 'array',
-                                    items: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          signerId: {
+                            type: 'string',
+                            description: 'The account ID that will sign the transaction',
+                          },
+                          receiverId: {
+                            type: 'string',
+                            description:
+                              'The account ID of the contract that will receive the transaction',
+                          },
+                          actions: {
+                            type: 'array',
+                            items: {
+                              type: 'object',
+                              properties: {
+                                type: {
+                                  type: 'string',
+                                  description: 'The type of action to perform',
+                                },
+                                params: {
+                                  type: 'object',
+                                  properties: {
+                                    methodName: {
+                                      type: 'string',
+                                      description: 'The name of the method to be called',
+                                    },
+                                    args: {
                                       type: 'object',
-                                      properties: {
-                                        type: {
-                                          type: 'string',
-                                          description: 'The type of action to perform',
-                                        },
-                                        params: {
-                                          type: 'object',
-                                          properties: {
-                                            methodName: {
-                                              type: 'string',
-                                              description: 'The name of the method to be called',
-                                            },
-                                            args: {
-                                              type: 'object',
-                                              description: 'Arguments for the function call',
-                                            },
-                                            gas: {
-                                              type: 'string',
-                                              description:
-                                                'Amount of gas to attach to the transaction',
-                                            },
-                                            deposit: {
-                                              type: 'string',
-                                              description: 'Amount to deposit with the transaction',
-                                            },
-                                          },
-                                          required: ['methodName', 'args', 'gas', 'deposit'],
-                                        },
-                                      },
-                                      required: ['type', 'params'],
+                                      description: 'Arguments for the function call',
+                                    },
+                                    gas: {
+                                      type: 'string',
+                                      description: 'Amount of gas to attach to the transaction',
+                                    },
+                                    deposit: {
+                                      type: 'string',
+                                      description: 'Amount to deposit with the transaction',
                                     },
                                   },
+                                  required: ['methodName', 'args', 'gas', 'deposit'],
                                 },
-                                required: ['receiverId', 'signerId', 'actions'],
                               },
+                              required: ['type', 'params'],
                             },
                           },
-                          required: ['type', 'transactions'],
                         },
-                        plan: {
-                          type: 'object',
-                          properties: {
-                            summary: {
-                              type: 'string',
-                              description: 'Human readable summary of the DCA plan',
-                            },
-                            nextInvestment: {
-                              type: 'string',
-                              format: 'date-time',
-                              description: 'Timestamp of the next scheduled investment',
-                            },
-                          },
-                          required: ['summary', 'nextInvestment'],
-                        },
+                        required: ['signerId', 'receiverId', 'actions'],
                       },
-                      required: ['status', 'transaction', 'plan'],
                     },
                   },
                 },
               },
               '400': {
-                description: 'Invalid parameters',
+                description: 'Bad request',
                 content: {
                   'application/json': {
                     schema: {
@@ -394,31 +355,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
                       properties: {
                         error: {
                           type: 'string',
-                          description: 'Error message',
-                        },
-                        details: {
-                          type: 'object',
-                          description: 'Detailed error information',
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-              '500': {
-                description: 'Server error',
-                content: {
-                  'application/json': {
-                    schema: {
-                      type: 'object',
-                      properties: {
-                        error: {
-                          type: 'string',
-                          description: 'Error message',
-                        },
-                        details: {
-                          type: 'string',
-                          description: 'Detailed error information',
+                          description: 'The error message',
                         },
                       },
                     },
@@ -500,10 +437,7 @@ export async function handleCreateDCA(request: Request, corsHeaders: any) {
 
     const transaction = await sdk.createDCAVault(createParams);
 
-    return handleResponse(
-      { status: 'success', transaction, vaultParams: createParams },
-      corsHeaders,
-    );
+    return handleResponse(transaction, corsHeaders);
   } catch (error: any) {
     return handleError(error, corsHeaders, 500);
   }
