@@ -78,12 +78,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
             3. Explain that user needs to sign transaction
             4. Remind that plan starts only after transaction is signed
             5. Be ready to help if transaction signing fails`,
-          tools: [
-            { type: 'get-pairs' },
-            { type: 'get-pair-prices' },
-            { type: 'create-dca' },
-            { type: 'generate-transaction' },
-          ],
+          tools: [{ type: 'generate-transaction' }],
           image: 'https://assets.deltatrade.ai/assets/img/logo-b.svg',
         },
       },
