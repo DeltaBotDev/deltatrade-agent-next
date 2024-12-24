@@ -7,10 +7,8 @@ function generateETag(content: any): string {
 
 export async function handleAIPlugin(request: Request, corsHeaders: any, env: Env) {
   try {
-    console.log('handleAIPlugin', env);
     const key = JSON.parse(env.BITTE_KEY || '{}');
     const config = JSON.parse(env.BITTE_CONFIG || '{}');
-    console.log('key', key);
     if (!key?.accountId) {
       console.error('no account');
     }
@@ -493,6 +491,7 @@ export async function handleCreateDCA(request: Request, corsHeaders: any) {
     }
 
     const errors = await sdk.validateDCAVaultParams(createParams);
+    console.log('validateDCAVaultParams errors', errors);
     if (errors) {
       return handleError({ message: 'DCA validation failed', details: errors }, corsHeaders, 400);
     }
