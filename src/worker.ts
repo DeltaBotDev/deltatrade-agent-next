@@ -1,12 +1,13 @@
 /* eslint-disable import/no-anonymous-default-export */
-import { 
-  handleGetBlockchains, 
-  handleTwitter, 
-  handleReddit, 
+import {
+  handleGetBlockchains,
+  handleTwitter,
+  handleReddit,
   handleCreateTransaction,
   handleGetPairs,
   handleCreateDCA,
-  handleAIPlugin
+  handleAIPlugin,
+  handleGetPairPrices,
 } from './handlers';
 
 export interface Env {
@@ -23,13 +24,14 @@ export default {
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version',
-      'Access-Control-Allow-Credentials': 'true'
+      'Access-Control-Allow-Headers':
+        'Content-Type, X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version',
+      'Access-Control-Allow-Credentials': 'true',
     };
 
     if (request.method === 'OPTIONS') {
       return new Response(null, {
-        headers: corsHeaders
+        headers: corsHeaders,
       });
     }
 
@@ -40,6 +42,8 @@ export default {
           return await handleAIPlugin(request, corsHeaders, env);
         case '/api/tools/get-pairs':
           return await handleGetPairs(request, corsHeaders);
+        case '/api/tools/get-pair-prices':
+          return await handleGetPairPrices(request, corsHeaders);
         case '/api/tools/create-dca':
           return await handleCreateDCA(request, corsHeaders);
         case '/api/tools/get-blockchains':
@@ -51,23 +55,20 @@ export default {
         case '/api/tools/create-transaction':
           return await handleCreateTransaction(request, corsHeaders);
         default:
-          return new Response('Not Found', { 
+          return new Response('Not Found', {
             status: 404,
-            headers: corsHeaders
+            headers: corsHeaders,
           });
       }
     } catch (err) {
       console.error('Error handling request:', err);
-      return new Response(
-        JSON.stringify({ error: 'Internal Server Error' }), 
-        {
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      });
     }
-  }
-}; 
+  },
+};
