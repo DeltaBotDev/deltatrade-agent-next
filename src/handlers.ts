@@ -28,7 +28,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
       'x-mb': {
         'account-id': key.accountId,
         assistant: {
-          name: 'Delta Trade DCA Helper3',
+          name: 'Delta Trade DCA Helper 5',
           description:
             'A friendly assistant that helps you set up DCA plans to buy NEAR and other tokens',
           instructions: `You are a DCA (Dollar-Cost Averaging) trading assistant. Your task is to help users create DCA plans.
@@ -126,6 +126,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
               type: 'get-dca-transactions',
               method: 'POST',
               requestFormat: 'json',
+              operationId: 'get-dca-transactions',
             },
           ],
           image: 'https://assets.deltatrade.ai/assets/img/logo-b.svg',
@@ -281,7 +282,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
           post: {
             operationId: 'get-dca-transactions',
             description:
-              'Get transaction payloads for creating a DCA (Dollar Cost Averaging) plan on Delta Trade.',
+              'Get transaction payloads for creating a DCA (Dollar Cost Averaging) plan. Returns the transaction information that needs to be signed.',
             requestBody: {
               required: true,
               content: {
