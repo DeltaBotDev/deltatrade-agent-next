@@ -268,6 +268,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
               {
                 name: 'intervalTime',
                 in: 'query',
+                required: true,
                 schema: {
                   type: 'number',
                   default: 604800,
