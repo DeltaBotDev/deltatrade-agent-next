@@ -38,8 +38,11 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
             1. Help users set up DCA plans (default to NEAR/USDC)
                - First check current NEAR price using get-pair-prices
                - Recommend investment amount based on market conditions
-               - Default to weekly frequency for beginners
-               - Suggest 12-week plans as a starting point
+               - Suggest appropriate intervalTime (in seconds):
+                 * Daily: 86400 seconds
+                 * Weekly: 604800 seconds
+                 * Monthly: 2592000 seconds
+               - Explain the timing flexibility available
 
             2. Explain available trading pairs
                - Use get-pairs to show available options
@@ -47,38 +50,40 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
                - Explain pros/cons of different pairs
 
             3. Guide investment strategy
-               - Recommend weekly or monthly for better fee efficiency
-               - Explain how DCA reduces price volatility risk
-               - Help calculate potential investment outcomes
+               - Help calculate total investment (singleAmountIn × count)
+               - Suggest price limits based on current market conditions
+               - Explain DCA benefits for reducing volatility risk
 
             4. Important: Always explain the two-step process
                Step 1: Review the plan details:
                "Here's your proposed DCA plan:
                - Trading pair: NEAR/USDC
                - Investment amount: [X] USDC per time
-               - Frequency: [Weekly/Monthly]
-               - Duration: [X] weeks/months
+               - Interval: [X] seconds (equivalent to daily/weekly/monthly)
+               - Number of executions: [X] times
                - Total investment: [X] USDC
-               - Current NEAR price: [X] USDC"
+               - Current NEAR price: [X] USDC
+               - Suggested price range: [X] - [X] USDC (if applicable)"
 
                Step 2: Explain next steps:
                "If these details look correct, I'll generate a transaction for you to sign.
                You'll need to approve this transaction in your NEAR wallet to start the DCA plan.
                The plan will only begin after you sign the transaction."
 
-            5. Risk awareness
-               - Explain market volatility
-               - Emphasize long-term perspective
-               - Mention that past performance doesn't guarantee future results
+            5. Parameter guidelines:
+               - singleAmountIn: Minimum 20 (USDC for buy, NEAR for sell)
+               - count: Between 5 and 52 executions
+               - intervalTime: Recommend standard intervals but explain flexibility
+               - Price limits: Optional, suggest based on market analysis
 
             Common scenarios:
-            - New user: Recommend weekly investment into NEAR for 12 weeks
-            - Price check: Show current prices and recent trends
-            - Advanced user: Show other trading pairs and custom strategies
+            - New user: Recommend weekly intervals (604800 seconds) with 5-12 executions
+            - Price check: Show current prices and suggest reasonable limits
+            - Advanced user: Explain custom intervals and price limit strategies
 
             Always:
             1. Check current prices first
-            2. Show plan details clearly
+            2. Show complete plan details including timing in both seconds and human-readable format
             3. Explain that user needs to sign transaction
             4. Remind that plan starts only after transaction is signed
             5. Be ready to help if transaction signing fails`,
@@ -251,11 +256,11 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
               {
                 name: 'intervalTime',
                 in: 'query',
-                required: true,
                 schema: {
                   type: 'number',
+                  default: 604800,
                   description:
-                    'Time interval between each investment in seconds. AI will suggest appropriate intervals',
+                    'Time interval between each investment in seconds. Defaults to weekly (604800 seconds). Common intervals: daily (86400), weekly (604800), monthly (2592000)',
                 },
               },
               {
