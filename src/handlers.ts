@@ -28,7 +28,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
       'x-mb': {
         'account-id': key.accountId,
         assistant: {
-          name: 'Delta Trade DCA Helper2',
+          name: 'Delta Trade DCA Helper3',
           description:
             'A friendly assistant that helps you set up DCA plans to buy NEAR and other tokens',
           instructions: `You are a DCA (Dollar-Cost Averaging) trading assistant. Your task is to help users create DCA plans.
@@ -109,10 +109,24 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
             NEVER generate the final JSON until all required parameters are confirmed.
             Always verify the final parameters match user's intent.`,
           tools: [
-            { type: 'generate-transaction' },
-            { type: 'get-pair-prices' },
-            { type: 'get-pairs' },
-            { type: 'get-dca-transactions' },
+            {
+              type: 'generate-transaction',
+              method: 'POST',
+              requestFormat: 'json',
+            },
+            {
+              type: 'get-pair-prices',
+              method: 'GET',
+            },
+            {
+              type: 'get-pairs',
+              method: 'GET',
+            },
+            {
+              type: 'get-dca-transactions',
+              method: 'POST',
+              requestFormat: 'json',
+            },
           ],
           image: 'https://assets.deltatrade.ai/assets/img/logo-b.svg',
         },
