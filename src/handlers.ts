@@ -266,6 +266,18 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
                 description: 'Trading pair ID (defaults to NEAR/USDC)',
               },
               {
+                name: 'tradeType',
+                in: 'query',
+                required: true,
+                schema: {
+                  type: 'string',
+                  enum: ['buy', 'sell'],
+                  default: 'buy',
+                },
+                description:
+                  'Specifies the trading direction - "buy" to acquire base token using quote token, or "sell" to exchange base token for quote token (defaults to "buy")',
+              },
+              {
                 name: 'intervalTime',
                 in: 'query',
                 required: true,
