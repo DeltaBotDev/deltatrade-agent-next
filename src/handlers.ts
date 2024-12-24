@@ -282,8 +282,8 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
                 required: true,
                 schema: {
                   type: 'number',
-                  minimum: 20,
-                  default: 20,
+                  minimum: 10,
+                  default: 10,
                   description:
                     'Amount to invest per time. For buy orders, amount is in quote token (e.g., USDC). For sell orders, amount is in base token (e.g., NEAR)',
                 },
