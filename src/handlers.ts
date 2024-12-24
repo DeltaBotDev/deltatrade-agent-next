@@ -16,7 +16,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
       info: {
         title: 'Delta Trade DCA Bot',
         description: 'API for creating and managing DCA trading bots on NEAR',
-        version: '1.0.0',
+        version: '1.0.1',
       },
       servers: [
         {
