@@ -121,25 +121,32 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
                               },
                               base_token: {
                                 type: 'string',
-                                description: 'Base token symbol',
+                                description: 'Base token contract ID or symbol',
                               },
                               quote_token: {
                                 type: 'string',
-                                description: 'Quote token symbol',
+                                description: 'Quote token contract ID or symbol',
                               },
                               base_decimals: {
                                 type: 'integer',
-                                description: 'Decimals of base token',
+                                description: 'Decimal places for base token',
                               },
                               quote_decimals: {
                                 type: 'integer',
-                                description: 'Decimals of quote token',
+                                description: 'Decimal places for quote token',
                               },
                             },
+                            required: [
+                              'pair_id',
+                              'base_token',
+                              'quote_token',
+                              'base_decimals',
+                              'quote_decimals',
+                            ],
                           },
-                          description: 'List of available trading pairs',
                         },
                       },
+                      required: ['pairs'],
                     },
                   },
                 },
@@ -189,9 +196,32 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
                       properties: {
                         pairPrices: {
                           type: 'object',
-                          description: 'Prices of trading pairs',
+                          additionalProperties: {
+                            type: 'object',
+                            properties: {
+                              pair_id: {
+                                type: 'string',
+                                description: 'Unique identifier for the trading pair',
+                              },
+                              basePrice: {
+                                type: 'string',
+                                description: 'Price in terms of base token',
+                              },
+                              quotePrice: {
+                                type: 'string',
+                                description: 'Price in terms of quote token',
+                              },
+                              pairPrice: {
+                                type: 'string',
+                                description: 'Calculated pair price (basePrice/quotePrice)',
+                              },
+                            },
+                            required: ['pair_id', 'basePrice', 'quotePrice', 'pairPrice'],
+                          },
+                          description: 'Map of pair IDs to their current prices',
                         },
                       },
+                      required: ['pairPrices'],
                     },
                   },
                 },
@@ -261,24 +291,92 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
                       properties: {
                         status: {
                           type: 'string',
-                          description: 'Creation status',
+                          description: 'Status of the DCA plan creation',
+                          enum: ['success'],
+                        },
+                        transaction: {
+                          type: 'object',
+                          description: 'Transaction details for execution',
+                          properties: {
+                            type: {
+                              type: 'string',
+                              enum: ['generate-transaction'],
+                              description: 'Type of action to perform',
+                            },
+                            transactions: {
+                              type: 'array',
+                              items: {
+                                type: 'object',
+                                properties: {
+                                  receiverId: {
+                                    type: 'string',
+                                    description:
+                                      'The account ID of the contract that will receive the transaction',
+                                  },
+                                  signerId: {
+                                    type: 'string',
+                                    description: 'The account ID that will sign the transaction',
+                                  },
+                                  actions: {
+                                    type: 'array',
+                                    items: {
+                                      type: 'object',
+                                      properties: {
+                                        type: {
+                                          type: 'string',
+                                          description: 'The type of action to perform',
+                                        },
+                                        params: {
+                                          type: 'object',
+                                          properties: {
+                                            methodName: {
+                                              type: 'string',
+                                              description: 'The name of the method to be called',
+                                            },
+                                            args: {
+                                              type: 'object',
+                                              description: 'Arguments for the function call',
+                                            },
+                                            gas: {
+                                              type: 'string',
+                                              description:
+                                                'Amount of gas to attach to the transaction',
+                                            },
+                                            deposit: {
+                                              type: 'string',
+                                              description: 'Amount to deposit with the transaction',
+                                            },
+                                          },
+                                          required: ['methodName', 'args', 'gas', 'deposit'],
+                                        },
+                                      },
+                                      required: ['type', 'params'],
+                                    },
+                                  },
+                                },
+                                required: ['receiverId', 'signerId', 'actions'],
+                              },
+                            },
+                          },
+                          required: ['type', 'transactions'],
                         },
                         plan: {
                           type: 'object',
                           properties: {
                             summary: {
                               type: 'string',
-                              description:
-                                'Plan summary, e.g., "Buy NEAR with 10 USDC weekly for 12 weeks"',
+                              description: 'Human readable summary of the DCA plan',
                             },
                             nextInvestment: {
                               type: 'string',
                               format: 'date-time',
-                              description: 'Next investment time',
+                              description: 'Timestamp of the next scheduled investment',
                             },
                           },
+                          required: ['summary', 'nextInvestment'],
                         },
                       },
+                      required: ['status', 'transaction', 'plan'],
                     },
                   },
                 },
