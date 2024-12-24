@@ -1,14 +1,5 @@
 /* eslint-disable import/no-anonymous-default-export */
-import {
-  handleGetBlockchains,
-  handleTwitter,
-  handleReddit,
-  handleCreateTransaction,
-  handleGetPairs,
-  handleCreateDCA,
-  handleAIPlugin,
-  handleGetPairPrices,
-} from './handlers';
+import { handleGetPairs, handleCreateDCA, handleAIPlugin, handleGetPairPrices } from './handlers';
 
 export interface Env {
   BITTE_KEY?: string;
@@ -46,14 +37,6 @@ export default {
           return await handleGetPairPrices(request, corsHeaders);
         case '/api/tools/create-dca':
           return await handleCreateDCA(request, corsHeaders);
-        case '/api/tools/get-blockchains':
-          return await handleGetBlockchains(request, corsHeaders);
-        case '/api/tools/twitter':
-          return await handleTwitter(request, corsHeaders);
-        case '/api/tools/reddit':
-          return await handleReddit(request, corsHeaders);
-        case '/api/tools/create-transaction':
-          return await handleCreateTransaction(request, corsHeaders);
         default:
           return new Response('Not Found', {
             status: 404,
