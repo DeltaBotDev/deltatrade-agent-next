@@ -1,6 +1,10 @@
 import DeltaTradeSDK from '@delta-trade/core';
 import { Env } from './worker';
 
+function generateETag(content: any): string {
+  return `W/"${Buffer.from(JSON.stringify(content)).toString('base64')}"`;
+}
+
 export async function handleAIPlugin(request: Request, corsHeaders: any, env: Env) {
   try {
     console.log('handleAIPlugin', env);
@@ -16,7 +20,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
       info: {
         title: 'Delta Trade DCA Bot',
         description: 'API for creating and managing DCA trading bots on NEAR',
-        version: '1.0.1',
+        version: '1.0.3',
       },
       servers: [
         {
@@ -26,7 +30,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
       'x-mb': {
         'account-id': key.accountId,
         assistant: {
-          name: 'NEAR DCA Helper',
+          name: 'Delta Trade DCA Helper',
           description:
             'A friendly assistant that helps you set up DCA plans to buy NEAR and other tokens',
           instructions: `You are a helpful DCA assistant for NEAR Protocol. Your main tasks are:
@@ -245,37 +249,66 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
                 description: 'Trading pair ID (defaults to NEAR/USDC)',
               },
               {
-                name: 'interval',
-                in: 'query',
-                required: true,
-                schema: {
-                  type: 'string',
-                  enum: ['daily', 'weekly', 'monthly'],
-                  default: 'weekly',
-                },
-                description: 'Investment frequency: daily/weekly/monthly',
-              },
-              {
-                name: 'amount',
+                name: 'intervalTime',
                 in: 'query',
                 required: true,
                 schema: {
                   type: 'number',
                   description:
-                    'Amount of USDC to invest per time (minimum 20 USDC based on current token price)',
+                    'Time interval between each investment in seconds. AI will suggest appropriate intervals',
                 },
               },
               {
-                name: 'totalTimes',
+                name: 'singleAmountIn',
+                in: 'query',
+                required: true,
+                schema: {
+                  type: 'number',
+                  minimum: 20,
+                  default: 20,
+                  description:
+                    'Amount to invest per time. For buy orders, amount is in quote token (e.g., USDC). For sell orders, amount is in base token (e.g., NEAR)',
+                },
+              },
+              {
+                name: 'count',
                 in: 'query',
                 required: true,
                 schema: {
                   type: 'integer',
-                  minimum: 4,
+                  minimum: 5,
                   maximum: 52,
-                  default: 12,
+                  default: 5,
                 },
-                description: 'Total number of investments (recommended 12 or more)',
+                description:
+                  'Number of times the DCA order will execute. Each execution will invest singleAmountIn at intervalTime intervals',
+              },
+              {
+                name: 'lowestPrice',
+                in: 'query',
+                schema: {
+                  type: 'number',
+                },
+                description:
+                  'Optional lowest price limit. If not provided, AI will suggest based on current market price',
+              },
+              {
+                name: 'highestPrice',
+                in: 'query',
+                schema: {
+                  type: 'number',
+                },
+                description:
+                  'Optional highest price limit. If not provided, AI will suggest based on current market price',
+              },
+              {
+                name: 'name',
+                in: 'query',
+                schema: {
+                  type: 'string',
+                },
+                description:
+                  'Optional name for the DCA plan. AI will generate a creative name if not provided',
               },
             ],
             responses: {
@@ -361,7 +394,23 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
       },
     };
 
-    return handleResponse(pluginData, corsHeaders);
+    const etag = generateETag(pluginData);
+
+    const ifNoneMatch = request.headers.get('If-None-Match');
+
+    if (ifNoneMatch === etag) {
+      return handleResponse(
+        null,
+        { ...corsHeaders, ETag: etag, 'Cache-Control': 'public, max-age=0, must-revalidate' },
+        304,
+      );
+    }
+
+    return handleResponse(
+      pluginData,
+      { ...corsHeaders, ETag: etag, 'Cache-Control': 'public, max-age=0, must-revalidate' },
+      200,
+    );
   } catch (error) {
     console.error('Error in AI Plugin:', error);
     return handleError(error, corsHeaders, 500);
@@ -436,8 +485,9 @@ export async function handleCreateDCA(request: Request, corsHeaders: any) {
   }
 }
 
-function handleResponse(response: any, corsHeaders: any) {
+function handleResponse(response: any, corsHeaders: any, status: number = 200) {
   return new Response(JSON.stringify(response), {
+    status,
     headers: {
       'Content-Type': 'application/json',
       ...corsHeaders,
