@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "deploy": "wrangler deploy --no-bundle && sleep 10 && make-agent update -u https://agent-api.deltatrade.ai"
+    "deploy": "wrangler deploy && sleep 10 && make-agent update -u https://agent-api.deltatrade.ai"
   },
   "dependencies": {
     "@delta-trade/core": "^0.0.8"
