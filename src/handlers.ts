@@ -235,9 +235,9 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
         },
         '/api/tools/create-dca': {
           post: {
-            operationId: 'createDcaVault',
-            summary: 'Create Simple DCA Plan',
-            description: 'Create a DCA plan to buy NEAR with USDC',
+            operationId: 'get-dca-transactions',
+            description:
+              'Get transaction payloads for creating a DCA (Dollar Cost Averaging) plan on Delta Trade. Returns the necessary transactions that need to be signed and executed to set up the DCA plan.',
             parameters: [
               {
                 name: 'pairId',
@@ -266,11 +266,9 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
                 required: true,
                 schema: {
                   type: 'number',
-                  minimum: 5,
-                  maximum: 1000,
-                  default: 10,
+                  description:
+                    'Amount of USDC to invest per time (minimum 20 USDC based on current token price)',
                 },
-                description: 'Amount of USDC to invest per time',
               },
               {
                 name: 'totalTimes',
@@ -287,7 +285,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
             ],
             responses: {
               '200': {
-                description: 'Successful response',
+                description: 'Returns an array of transactions that need to be signed and executed',
                 content: {
                   'application/json': {
                     schema: {
