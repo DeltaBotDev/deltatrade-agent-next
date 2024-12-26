@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "deploy": "wrangler deploy && sleep 10 && make-agent update -u https://agent-api.deltatrade.ai"
+    "deploy:agent": "wrangler deploy",
+    "update:agent": "make-agent update -u https://agent-api.deltatrade.ai",
+    "pub": "npm run deploy:agent && npm run update:agent"
   },
   "dependencies": {
-    "@delta-trade/core": "^0.0.8"
+    "@delta-trade/core": "^0.0.9"
   },
   "devDependencies": {
     "@types/node": "^20",

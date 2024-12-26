@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@delta-trade/core':
-        specifier: ^0.0.8
-        version: 0.0.8(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10)
+        specifier: ^0.0.9
+        version: 0.0.9(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10)
     devDependencies:
       '@types/node':
         specifier: ^20
@@ -115,8 +115,8 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
-  '@delta-trade/core@0.0.8':
-    resolution: {integrity: sha512-5sCob5UyYwOk5ghbDsMgsIno9c3eq41MyamrIdHp/4y0mSVzP9f3peuBRUMAvH6sYbjnuBnGFHELuqF4AzlXjA==}
+  '@delta-trade/core@0.0.9':
+    resolution: {integrity: sha512-k02PVvUFP19KRxkN7i+i6/N4E50KpoOCh0ghp82pGAxihyfDfrReKPMCqyv54MWCZCvLMPo/Mo97RUY+xp1BwA==}
 
   '@esbuild-plugins/node-globals-polyfill@0.2.3':
     resolution: {integrity: sha512-r3MIryXDeXDOZh7ih1l/yE9ZLORCd5e8vWg02azWRGj5SPTuoh69A2AIyn0Z31V/kHBfZ4HgWJ+OK3GTTwLmnw==}
@@ -2603,7 +2603,7 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@delta-trade/core@0.0.8(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10)':
+  '@delta-trade/core@0.0.9(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@near-wallet-selector/core': 8.9.15(near-api-js@5.0.1)

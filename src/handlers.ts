@@ -1,9 +1,15 @@
-import DeltaTradeSDK from '@delta-trade/core';
+import { initSdk, generateETag, handleResponse, handleError } from './utils';
+import { CreateDCAVaultParams } from '@delta-trade/core';
 import { Env } from './worker';
+import {
+  formatPairDetailed,
+  formatPairSimple,
+  formatDCAVaultDetailed,
+  formatDCAVaultSimple,
+} from './format';
 
-function generateETag(content: any): string {
-  return `W/"${Buffer.from(JSON.stringify(content)).toString('base64')}"`;
-}
+const DEFAULT_PAIR_ID =
+  'wrap.near:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1';
 
 export async function handleAIPlugin(request: Request, corsHeaders: any, env: Env) {
   try {
@@ -28,7 +34,7 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
       'x-mb': {
         'account-id': key.accountId,
         assistant: {
-          name: 'Delta Trade DCA Helper 5',
+          name: 'Delta Trade DCA Helper',
           description:
             'A friendly assistant that helps you set up DCA plans to buy NEAR and other tokens',
           instructions: `You are a DCA (Dollar-Cost Averaging) trading assistant. Your task is to help users create DCA plans.
@@ -36,11 +42,11 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
             When analyzing user input, you MUST check for these required parameters:
             1. Trading interval (intervalTime)
               - If missing, ask: "How often do you want to trade? (e.g., daily, weekly, monthly)"
-              - Convert the answer to seconds:
-                * Daily/每天/day/once a day → 86400 seconds
-                * Weekly/每周/week/once a week → 604800 seconds (default recommendation)
-                * Monthly/每月/month/once a month → 2592000 seconds
-              - Any interval >= 60 seconds is supported
+              - Convert the answer to milliseconds:
+                * Daily/每天/day/once a day → 86400000 milliseconds
+                * Weekly/每周/week/once a week → 604800000 milliseconds (default recommendation)
+                * Monthly/每月/month/once a month → 2592000000 milliseconds
+              - Any interval >= 60000 milliseconds is supported
               - Common English patterns: "every X days", "X times per week", "once a month"
 
             2. Amount per trade (singleAmountIn)
@@ -111,22 +117,6 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
           tools: [
             {
               type: 'generate-transaction',
-              method: 'POST',
-              requestFormat: 'json',
-            },
-            {
-              type: 'get-pair-prices',
-              method: 'GET',
-            },
-            {
-              type: 'get-pairs',
-              method: 'GET',
-            },
-            {
-              type: 'get-dca-transactions',
-              method: 'POST',
-              requestFormat: 'json',
-              operationId: 'get-dca-transactions',
             },
           ],
           image: 'https://assets.deltatrade.ai/assets/img/logo-b.svg',
@@ -150,6 +140,16 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
                     'Type of trading pairs to retrieve. If not provided, returns all pairs.',
                 },
               },
+              {
+                name: 'detail',
+                in: 'query',
+                required: false,
+                schema: {
+                  type: 'boolean',
+                  default: false,
+                  description: 'Whether to return detailed information about trading pairs.',
+                },
+              },
             ],
             responses: {
               '200': {
@@ -164,52 +164,151 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
                           items: {
                             type: 'object',
                             properties: {
+                              pair_db_id: {
+                                type: 'integer',
+                                description: 'Database ID of the trading pair',
+                                example: 1,
+                              },
                               pair_id: {
                                 type: 'string',
                                 description: 'Unique identifier for the trading pair',
+                                example:
+                                  'wrap.near:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1',
+                              },
+                              name: {
+                                type: 'string',
+                                description: 'Display name of the trading pair',
+                                example: 'NEAR/USDC',
                               },
                               base_token: {
-                                type: 'string',
-                                description: 'Base token contract ID or symbol',
+                                type: 'object',
+                                description: 'Base token information',
+                                properties: {
+                                  id: { type: 'integer', description: 'Token database ID' },
+                                  code: { type: 'string', description: 'Token contract address' },
+                                  symbol: { type: 'string', description: 'Token symbol' },
+                                  name: { type: 'string', description: 'Full token name' },
+                                  icon: { type: 'string', description: 'Token icon URL' },
+                                  decimals: {
+                                    type: 'integer',
+                                    description: 'Token decimal places',
+                                  },
+                                  oracle_id: {
+                                    type: 'string',
+                                    description: 'Oracle identifier for price feeds',
+                                  },
+                                },
                               },
                               quote_token: {
+                                type: 'object',
+                                description: 'Quote token information',
+                                properties: {
+                                  id: { type: 'integer', description: 'Token database ID' },
+                                  code: { type: 'string', description: 'Token contract address' },
+                                  symbol: { type: 'string', description: 'Token symbol' },
+                                  name: { type: 'string', description: 'Full token name' },
+                                  icon: { type: 'string', description: 'Token icon URL' },
+                                  decimals: {
+                                    type: 'integer',
+                                    description: 'Token decimal places',
+                                  },
+                                  oracle_id: {
+                                    type: 'string',
+                                    description: 'Oracle identifier for price feeds',
+                                  },
+                                },
+                              },
+                              is_main: {
+                                type: 'boolean',
+                                description: 'Whether this is a main trading pair',
+                              },
+                              is_meme: {
+                                type: 'boolean',
+                                description: 'Whether this is a meme token pair',
+                              },
+                              is_warn: {
+                                type: 'boolean',
+                                description: 'Whether this pair has active warnings',
+                              },
+                              is_mining: {
+                                type: 'boolean',
+                                description: 'Whether mining rewards are available',
+                              },
+                              support_dca: {
+                                type: 'boolean',
+                                description: 'DCA trading support status',
+                              },
+                              support_grid: {
+                                type: 'boolean',
+                                description: 'Grid trading support status',
+                              },
+                              market_cap_volume: {
                                 type: 'string',
-                                description: 'Quote token contract ID or symbol',
+                                description: 'Market cap volume',
                               },
-                              base_decimals: {
+                              ranking: { type: 'integer', description: 'Pair ranking' },
+                              type: { type: 'string', description: 'Trading pair type' },
+                              price: { type: 'string', description: 'Current price' },
+                              pair_price: { type: 'string', description: 'Trading pair price' },
+                              change: {
+                                type: 'string',
+                                description: '24h price change percentage',
+                              },
+                              volume_24h: { type: 'string', description: '24h trading volume' },
+                              volume_total: { type: 'string', description: 'Total trading volume' },
+                              apy_daily: { type: 'string', description: 'Daily APY percentage' },
+                              apy_daily_bot_id: {
                                 type: 'integer',
-                                description: 'Decimal places for base token',
+                                description: 'Best performing daily bot ID',
                               },
-                              quote_decimals: {
+                              apy_weekly: { type: 'string', description: 'Weekly APY percentage' },
+                              apy_weekly_bot_id: {
                                 type: 'integer',
-                                description: 'Decimal places for quote token',
+                                description: 'Best performing weekly bot ID',
                               },
+                              apy_monthly: {
+                                type: 'string',
+                                description: 'Monthly APY percentage',
+                              },
+                              apy_monthly_bot_id: {
+                                type: 'integer',
+                                description: 'Best performing monthly bot ID',
+                              },
+                              liquidity: { type: 'string', description: 'Available liquidity' },
+                              market_cap: { type: 'string', description: 'Market capitalization' },
+                              volatility: {
+                                type: 'string',
+                                description: 'Price volatility indicator',
+                              },
+                              vaults: { type: 'integer', description: 'Number of active vaults' },
+                              symbol: { type: 'string', description: 'Trading pair symbol' },
+                              types: {
+                                type: 'array',
+                                items: { type: 'string' },
+                                description: 'Supported trading types',
+                              },
+                              chain: { type: 'string', description: 'Blockchain network' },
                             },
-                            required: [
-                              'pair_id',
-                              'base_token',
-                              'quote_token',
-                              'base_decimals',
-                              'quote_decimals',
-                            ],
                           },
                         },
-                      },
-                      required: ['pairs'],
-                    },
-                  },
-                },
-              },
-              '500': {
-                description: 'Server error',
-                content: {
-                  'application/json': {
-                    schema: {
-                      type: 'object',
-                      properties: {
-                        error: {
-                          type: 'string',
-                          description: 'Error message',
+                        display: {
+                          type: 'object',
+                          description: 'Formatted display information',
+                          properties: {
+                            summary: {
+                              type: 'string',
+                              description: 'Summary of retrieved pairs',
+                              example: 'Found 3 trading pairs',
+                            },
+                            formatted_pairs: {
+                              type: 'array',
+                              items: {
+                                type: 'string',
+                                description: 'Formatted pair information',
+                              },
+                              description: 'Array of formatted pair information strings',
+                            },
+                          },
                         },
                       },
                     },
@@ -283,68 +382,93 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
             operationId: 'get-dca-transactions',
             description:
               'Get transaction payloads for creating a DCA (Dollar Cost Averaging) plan. Returns the transaction information that needs to be signed.',
-            requestBody: {
-              required: true,
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    required: ['tradeType', 'intervalTime', 'singleAmountIn', 'count'],
-                    properties: {
-                      pairId: {
-                        type: 'string',
-                        default:
-                          'wrap.near:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1',
-                        description: 'Trading pair ID (defaults to NEAR/USDC)',
-                      },
-                      tradeType: {
-                        type: 'string',
-                        enum: ['buy', 'sell'],
-                        default: 'buy',
-                        description:
-                          'Trading direction. AI will analyze user intent to determine whether to buy or sell. Defaults to "buy" if ambiguous',
-                      },
-                      intervalTime: {
-                        type: 'number',
-                        default: 604800,
-                        description:
-                          'Time interval between each investment in seconds. AI will convert user-friendly terms (daily, weekly, monthly) to seconds. Common intervals: daily (86400), weekly (604800), monthly (2592000)',
-                      },
-                      singleAmountIn: {
-                        type: 'number',
-                        minimum: 10,
-                        default: 10,
-                        description:
-                          'Amount to invest per time. For buy orders, amount is in quote token (e.g., USDC). For sell orders, amount is in base token (e.g., NEAR)',
-                      },
-                      count: {
-                        type: 'integer',
-                        minimum: 5,
-                        maximum: 52,
-                        default: 5,
-                        description:
-                          'Number of times the DCA order will execute. Each execution will invest singleAmountIn at intervalTime intervals',
-                      },
-                      name: {
-                        type: 'string',
-                        description:
-                          'Name for the DCA plan. AI will generate a creative name if not provided, based on the trading strategy and parameters (e.g., "Weekly NEAR Accumulation Plan")',
-                      },
-                      lowestPrice: {
-                        type: 'number',
-                        description:
-                          'Optional lowest price limit. If not provided, AI will suggest based on current market price and historical data',
-                      },
-                      highestPrice: {
-                        type: 'number',
-                        description:
-                          'Optional highest price limit. If not provided, AI will suggest based on current market price and historical data',
-                      },
-                    },
-                  },
+            parameters: [
+              {
+                name: 'pairId',
+                in: 'query',
+                schema: {
+                  type: 'string',
+                  default: DEFAULT_PAIR_ID,
                 },
+                description: `Trading pair ID (defaults to ${DEFAULT_PAIR_ID})`,
               },
-            },
+              {
+                name: 'tradeType',
+                in: 'query',
+                required: true,
+                schema: {
+                  type: 'string',
+                  enum: ['buy', 'sell'],
+                  default: 'buy',
+                },
+                description:
+                  'Trading direction. AI will analyze user intent to determine whether to buy or sell',
+              },
+              {
+                name: 'intervalTime',
+                in: 'query',
+                required: true,
+                schema: {
+                  type: 'number',
+                  default: 604800000,
+                },
+                description: 'Time interval between each investment in milliseconds',
+              },
+              {
+                name: 'startTime',
+                in: 'query',
+                required: true,
+                schema: {
+                  type: 'number',
+                },
+                description: 'Start time of the DCA plan in seconds since epoch',
+              },
+              {
+                name: 'singleAmountIn',
+                in: 'query',
+                required: true,
+                schema: {
+                  type: 'number',
+                  minimum: 10,
+                },
+                description: 'Amount to invest per time',
+              },
+              {
+                name: 'count',
+                in: 'query',
+                required: true,
+                schema: {
+                  type: 'integer',
+                  minimum: 5,
+                  maximum: 52,
+                },
+                description: 'Number of times to execute',
+              },
+              {
+                name: 'lowestPrice',
+                in: 'query',
+                schema: {
+                  type: 'number',
+                },
+                description: 'Optional lowest price limit',
+              },
+              {
+                name: 'highestPrice',
+                in: 'query',
+                schema: {
+                  type: 'number',
+                },
+                description: 'Optional highest price limit',
+              },
+              {
+                name: 'name',
+                in: 'query',
+                schema: {
+                  type: 'string',
+                },
+                description: 'Name for the DCA plan. AI will generate if not provided',
+              },
+            ],
             responses: {
               '200': {
                 description: 'Returns an array of transactions that need to be signed and executed',
@@ -425,6 +549,89 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
             },
           },
         },
+        '/api/tools/get-my-dca-vaults': {
+          get: {
+            operationId: 'get-my-dca-vaults',
+            summary: 'Get My DCA Vaults',
+            description: 'Retrieve all DCA vaults owned by the current user.',
+            responses: {
+              '200': {
+                description: 'Successfully retrieved DCA vaults',
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        list: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              index: {
+                                type: 'number',
+                                description: 'Index number',
+                              },
+                              name: {
+                                type: 'string',
+                                description: 'Vault name',
+                              },
+                              side: {
+                                type: 'string',
+                                description: 'Trading side (buy/sell)',
+                              },
+                              investmentAmount: {
+                                type: 'string',
+                                description: 'Investment amount',
+                              },
+                              profit: {
+                                type: 'string',
+                                description: 'Profit amount',
+                              },
+                              profit_percent: {
+                                type: 'string',
+                                description: 'Historical ROI percentage',
+                              },
+                              status: {
+                                type: 'string',
+                                description: 'Vault status',
+                              },
+                              bot_create_time: {
+                                type: 'string',
+                                description: 'Creation time',
+                              },
+                              id: {
+                                type: 'string',
+                                description: 'Vault ID',
+                              },
+                            },
+                          },
+                        },
+                        display: {
+                          type: 'object',
+                          description: 'Formatted display information',
+                          properties: {
+                            summary: {
+                              type: 'string',
+                              description: 'Summary of vaults',
+                              example: 'Found 2 DCA vaults',
+                            },
+                            formatted_vaults: {
+                              type: 'array',
+                              items: {
+                                type: 'string',
+                                description: 'Formatted vault information',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     };
 
@@ -450,23 +657,25 @@ export async function handleAIPlugin(request: Request, corsHeaders: any, env: En
   }
 }
 
-function initSdk(accountId?: string) {
-  return DeltaTradeSDK.initEnv({
-    chain: 'near',
-    network: 'mainnet',
-    accountId: accountId,
-  });
-}
-
 export async function handleGetPairs(request: Request, corsHeaders: any) {
   try {
     const url = new URL(request.url);
     const type = url.searchParams.get('type') || ('dca' as any);
+    const detail = url.searchParams.get('detail') === 'true';
 
-    const sdk = initSdk();
+    const sdk = initSdk(request.headers);
     const pairs = await sdk.getPairs({ type });
 
-    return handleResponse({ pairs }, corsHeaders);
+    return handleResponse(
+      {
+        pairs,
+        display: {
+          summary: `Found ${pairs.length} trading pairs`,
+          formatted_pairs: pairs.map(detail ? formatPairDetailed : formatPairSimple),
+        },
+      },
+      corsHeaders,
+    );
   } catch (error: any) {
     console.error(error);
     return handleError(error, corsHeaders, 500);
@@ -477,7 +686,7 @@ export async function handleGetPairPrices(request: Request, corsHeaders: any) {
   try {
     const url = new URL(request.url);
     let pairIds = url.searchParams.get('pairIds')?.split(',');
-    const sdk = initSdk();
+    const sdk = initSdk(request.headers);
     if (!pairIds) pairIds = (await sdk.getPairs({ type: 'dca' })).map((p) => p.pair_id);
     const pairPrices = await sdk.getPairPrices(pairIds);
     return handleResponse({ pairPrices }, corsHeaders);
@@ -495,47 +704,70 @@ export async function handleCreateDCA(request: Request, corsHeaders: any) {
 
     const headersList = request.headers;
     const mbMetadata = JSON.parse(headersList.get('mb-metadata') || '{}');
-    const accountId = mbMetadata?.accountData?.accountId || 'near';
+    const accountId = mbMetadata?.accountId || 'near';
 
-    const createParams = await request.json();
-    const sdk = initSdk(accountId);
-    console.log('createParams', createParams);
-    if (!createParams.startTime) {
-      // default to 5 minutes from now
-      createParams.startTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-    }
+    const url = new URL(request.url);
+    const createParams: CreateDCAVaultParams = {
+      pairId: url.searchParams.get('pairId') || DEFAULT_PAIR_ID,
+      tradeType: url.searchParams.get('tradeType') as 'buy' | 'sell',
+      intervalTime: Number(url.searchParams.get('intervalTime')),
+      singleAmountIn: Number(url.searchParams.get('singleAmountIn')),
+      count: Number(url.searchParams.get('count')),
+      lowestPrice: url.searchParams.get('lowestPrice')
+        ? Number(url.searchParams.get('lowestPrice'))
+        : undefined,
+      highestPrice: url.searchParams.get('highestPrice')
+        ? Number(url.searchParams.get('highestPrice'))
+        : undefined,
+      name: url.searchParams.get('name') || `dca-${accountId}`,
+      startTime: url.searchParams.get('startTime')
+        ? Number(url.searchParams.get('startTime'))
+        : Date.now() + 5 * 60 * 1000,
+    };
+
+    console.log('handleCreateDCA/createParams', createParams);
+    const sdk = initSdk(request.headers);
 
     const errors = await sdk.validateDCAVaultParams(createParams);
-    console.log('validateDCAVaultParams errors', errors);
     if (errors) {
+      console.log('handleCreateDCA/validateDCAVaultParams errors', errors);
       return handleError({ message: 'DCA validation failed', details: errors }, corsHeaders, 400);
     }
 
-    const transaction = await sdk.createDCAVault(createParams);
-
-    return handleResponse(transaction, corsHeaders);
+    const transactions = await sdk.createDCAVault(createParams);
+    console.log('handleCreateDCA/transactions', transactions);
+    return handleResponse(transactions, corsHeaders);
   } catch (error: any) {
-    console.error('Error in handleCreateDCA', error?.message);
+    console.error('handleCreateDCA/catch', error?.message);
     return handleError(error, corsHeaders, 500);
   }
 }
 
-function handleResponse(response: any, corsHeaders: any, status: number = 200) {
-  return new Response(status === 304 ? null : JSON.stringify(response), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      ...corsHeaders,
-    },
-  });
-}
+export async function handleGetMyDCAVaults(request: Request, corsHeaders: any) {
+  try {
+    const url = new URL(request.url);
+    const detail = url.searchParams.get('detail') === 'true';
 
-function handleError(error: any, corsHeaders: any, status: number = 500) {
-  return new Response(JSON.stringify({ error: error.message || 'Failed to fetch pair prices' }), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      ...corsHeaders,
-    },
-  });
+    const sdk = initSdk(request.headers);
+    const vaults = await sdk.getMyDCAVaults({
+      orderBy: 'profit_24_usd',
+      dir: 'desc',
+      page: 1,
+      pageSize: 100,
+    });
+
+    return handleResponse(
+      {
+        ...vaults,
+        display: {
+          summary: `Found ${vaults.list.length} DCA vaults`,
+          formatted_vaults: vaults.list.map(detail ? formatDCAVaultDetailed : formatDCAVaultSimple),
+        },
+      },
+      corsHeaders,
+    );
+  } catch (error: any) {
+    console.error(error);
+    return handleError(error, corsHeaders, 500);
+  }
 }
