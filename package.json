@@ -4,17 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"next dev\" \"make-agent dev -p 3000\"",
-    "build": "next build",
+    "build": "next build && make-agent deploy",
     "start": "next start",
-    "lint": "next lint",
-    "pub": "wrangler deploy"
+    "lint": "next lint"
   },
   "engines": {
     "node": ">=18",
     "pnpm": ">=8"
   },
   "dependencies": {
-    "@delta-trade/core": "^0.0.7",
+    "@delta-trade/core": "^0.0.9",
     "next": "14.2.15",
     "react": "^18",
     "react-dom": "^18",
@@ -27,11 +26,12 @@
     "concurrently": "^9.1.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.15",
-    "eslint-plugin-next-on-pages": "^1.13.7",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
     "make-agent": "0.0.25",
+    "prettier": "^3.4.2",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5",
-    "wrangler": "^3.99.0"
+    "typescript": "^5"
   }
 }
