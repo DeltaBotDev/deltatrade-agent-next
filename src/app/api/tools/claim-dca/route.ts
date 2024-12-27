@@ -11,13 +11,13 @@ export async function POST(request: Request) {
     }
 
     const sdk = initSdk(request.headers);
-    const transactions = await sdk.closeDCAVault(vaultId);
+    const transactions = await sdk.claimDCAVault(vaultId);
 
     return NextResponse.json(transactions);
   } catch (error: any) {
-    console.error('Error closing DCA vault:', error);
+    console.error('Error claiming DCA vault rewards:', error);
     return NextResponse.json(
-      { error: 'Failed to close DCA vault', details: error.message },
+      { error: 'Failed to claim DCA vault rewards', details: error.message },
       { status: 500 },
     );
   }

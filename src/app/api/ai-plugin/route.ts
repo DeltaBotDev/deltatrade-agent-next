@@ -645,6 +645,165 @@ export async function GET() {
           },
         },
       },
+      '/api/tools/close-dca': {
+        post: {
+          operationId: 'close-dca',
+          summary: 'Close DCA Strategy',
+          description: 'Close a specified DCA vault',
+          parameters: [
+            {
+              name: 'vaultId',
+              in: 'query',
+              required: true,
+              schema: {
+                type: 'string',
+              },
+              description: 'The ID of the DCA vault to close',
+            },
+          ],
+          responses: {
+            '200': {
+              description: 'Returns transaction payloads that need to be signed',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        signerId: {
+                          type: 'string',
+                          description: 'Account ID of the transaction signer',
+                        },
+                        receiverId: {
+                          type: 'string',
+                          description: 'Contract account receiving the transaction',
+                        },
+                        actions: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '/api/tools/claim-dca': {
+        post: {
+          operationId: 'claim-dca',
+          summary: 'Claim DCA Rewards',
+          description: 'Claim rewards from a specified DCA vault',
+          parameters: [
+            {
+              name: 'vaultId',
+              in: 'query',
+              required: true,
+              schema: {
+                type: 'string',
+              },
+              description: 'The ID of the DCA vault to claim rewards from',
+            },
+          ],
+          responses: {
+            '200': {
+              description: 'Returns transaction payloads that need to be signed',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        signerId: {
+                          type: 'string',
+                          description: 'Account ID of the transaction signer',
+                        },
+                        receiverId: {
+                          type: 'string',
+                          description: 'Contract account receiving the transaction',
+                        },
+                        actions: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '/api/tools/my-assets': {
+        get: {
+          operationId: 'get-my-assets',
+          summary: 'Get User Token Assets',
+          description: 'Retrieve the list of token assets for the current user',
+          parameters: [
+            {
+              name: 'detail',
+              in: 'query',
+              required: false,
+              schema: {
+                type: 'boolean',
+                default: false,
+              },
+              description: 'Whether to return detailed asset information',
+            },
+          ],
+          responses: {
+            '200': {
+              description: 'Returns list of user token assets',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      assets: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            token: {
+                              type: 'object',
+                              properties: {
+                                symbol: { type: 'string' },
+                                code: { type: 'string' },
+                              },
+                            },
+                            balance: { type: 'string' },
+                            price: { type: 'string' },
+                            internalBalance: { type: 'string' },
+                          },
+                        },
+                      },
+                      display: {
+                        type: 'object',
+                        properties: {
+                          summary: { type: 'string' },
+                          formatted_assets: {
+                            type: 'array',
+                            items: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
   };
 
