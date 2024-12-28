@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"next dev\" \"make-agent dev -p 3000\"",
+    "dev:test": "next dev",
     "build": "next build && make-agent deploy",
     "start": "next start",
     "lint": "next lint"
@@ -13,7 +14,7 @@
     "pnpm": ">=8"
   },
   "dependencies": {
-    "@delta-trade/core": "^0.0.9",
+    "@delta-trade/core": "^0.1.1",
     "next": "14.2.15",
     "react": "^18",
     "react-dom": "^18",
@@ -29,8 +30,8 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "make-agent": "0.0.25",
-    "prettier": "^3.4.2",
     "postcss": "^8",
+    "prettier": "^3.4.2",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }
