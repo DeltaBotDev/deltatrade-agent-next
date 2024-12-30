@@ -61,7 +61,7 @@ export async function GET() {
   
               4. Count (number of executions)
                 - If missing, ask: "How many times do you want to execute this plan?"
-                - Between 5 and 52 executions
+                - Between 1 and 600 executions
                 - Common patterns: "X times", "X trades", "repeat X times"
   
               Process and Guidelines:
