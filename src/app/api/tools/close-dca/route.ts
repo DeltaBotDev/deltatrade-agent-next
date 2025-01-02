@@ -12,6 +12,7 @@ export async function POST(request: Request) {
 
     const sdk = initSdk(request.headers);
     const transactions = await sdk.closeDCAVault(vaultId);
+    console.log('transactions', transactions);
 
     return NextResponse.json(transactions);
   } catch (error: any) {
