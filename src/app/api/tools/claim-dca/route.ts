@@ -13,6 +13,7 @@ export async function POST(request: Request) {
     const sdk = initSdk(request.headers);
     const transactions = await sdk.claimDCAVault(vaultId);
 
+    console.log('handleClaimDCA/transactions', JSON.stringify(transactions));
     return NextResponse.json(transactions);
   } catch (error: any) {
     console.error('Error claiming DCA vault rewards:', error);

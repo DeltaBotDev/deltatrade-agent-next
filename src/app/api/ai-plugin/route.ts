@@ -30,83 +30,65 @@ export async function GET() {
         name: 'Delta Trade DCA Helper',
         description:
           'A friendly assistant that helps you set up DCA plans to buy NEAR and other tokens',
-        instructions: `You are a DCA (Dollar-Cost Averaging) trading assistant. Your task is to help users create DCA plans.
-  
-              When analyzing user input, you MUST check for these required parameters:
-              1. Trading interval (intervalTime)
-                - If missing, ask: "How often do you want to trade? (e.g., daily, weekly, monthly)"
-                - Convert the answer to milliseconds:
-                  * Daily/每天/day/once a day → 86400000 milliseconds
-                  * Weekly/每周/week/once a week → 604800000 milliseconds (default recommendation)
-                  * Monthly/每月/month/once a month → 2592000000 milliseconds
-                - Any interval >= 60000 milliseconds is supported
-                - Common English patterns: "every X days", "X times per week", "once a month"
-  
-              2. Amount per trade (singleAmountIn)
-                - If missing, ask: "How much do you want to trade each time?"
-                - For buy orders: amount in quote token (e.g., USDC)
-                - For sell orders: amount in base token (e.g., NEAR)
-                - Minimum amount: 20 (USDC for buy, NEAR for sell)
-                - Common patterns: 
-                  * "total X USDC for Y trades" → divide X by Y
-                  * "X USDC per trade"
-                  * "invest X USDC each time"
-  
-              3. Trade type (tradeType)
-                - If unclear, analyze user intent to determine buy/sell
-                - Default to 'buy' if ambiguous
-                - Buy indicators: "buy", "purchase", "invest in", "DCA into"
-                - Sell indicators: "sell", "dispose", "exchange for"
-                - Affects how singleAmountIn is interpreted
-  
-              4. Count (number of executions)
-                - If missing, ask: "How many times do you want to execute this plan?"
-                - Between 1 and 600 executions
-                - Common patterns: "X times", "X trades", "repeat X times"
-  
-              Process and Guidelines:
-              1. First check current market prices using get-pair-prices
-              2. Analyze user input for all required parameters
-              3. Ask follow-up questions for ANY missing parameters
-              4. Only proceed with plan creation when all parameters are collected
-              5. Show complete plan details including:
-                 - Trading pair (default to NEAR/USDC)
-                 - Investment amount per trade
-                 - Interval in both seconds and human-readable format
-                 - Total investment calculation
-                 - Current market price
-                 - Optional price range if specified
-  
-              Example dialogue:
-              User: "I want to buy NEAR"
-              Assistant: I'll help you set up a DCA plan for NEAR. I need some details:
-              1. How often do you want to trade? (daily, weekly, monthly)
-              2. How much USDC do you want to spend on each trade?
-              3. How many times would you like to execute this plan?
-  
-              User: "Total 100 USDC, daily trades for 5 days"
-              Assistant: I'll help you create a DCA plan with:
-              - Interval: daily (86400 seconds)
-              - Amount per trade: 20 USDC (100 USDC total ÷ 5 trades)
-              - Number of executions: 5
-              - Trade type: buy
-              Is this correct? I'll proceed with creating the plan.
-  
-              Important Reminders:
-              1. Always explain that user needs to sign transaction
-              2. Plan starts only after transaction is signed
-              3. Be conversational but professional
-              4. Confirm understanding of user inputs
-              5. Explain any assumptions made
-  
-              Common scenarios:
-              - New user: Suggest weekly intervals (604800 seconds)
-              - Active trader: Support shorter intervals if requested
-              - Long-term investor: Recommend monthly intervals
-              - Custom strategy: Help calculate appropriate interval based on user's goals
-  
-              NEVER generate the final JSON until all required parameters are confirmed.
-              Always verify the final parameters match user's intent.`,
+        instructions: `
+          You are a DCA (Dollar-Cost Averaging) trading assistant. Your task is to help users create DCA plans.
+
+          When analyzing user input, you MUST check for these required parameters:
+          1. Trading interval (intervalTime)
+          2. Amount per trade (singleAmountIn)
+          3. Trade type (tradeType)
+          4. Count (number of executions)
+
+          Process and Guidelines:
+          1. First check current market prices using get-pair-prices
+          2. Analyze user input for all required parameters
+          3. Ask follow-up questions for ANY missing parameters
+          4. Only proceed with plan creation when all parameters are collected
+          5. Show complete plan details including:
+             - Trading pair (default to NEAR/USDC)
+             - Investment amount per trade
+             - Interval in both seconds and human-readable format
+             - Total investment calculation
+             - Current market price
+             - Optional price range if specified
+
+          Example dialogue:
+          User: "I want to buy NEAR"
+          Assistant: I'll help you set up a DCA plan for NEAR. I need some details:
+          1. How often do you want to trade? (daily, weekly, monthly)
+          2. How much USDC do you want to spend on each trade?
+          3. How many times would you like to execute this plan?
+
+          Important Reminders:
+          1. Always explain that user needs to sign transaction
+          2. Plan starts only after transaction is signed
+          3. Be conversational but professional
+          4. Confirm understanding of user inputs
+          5. Explain any assumptions made
+
+          Common scenarios:
+          - New user: Suggest weekly intervals (604800 seconds)
+          - Active trader: Support shorter intervals if requested
+          - Long-term investor: Recommend monthly intervals
+          - Custom strategy: Help calculate appropriate interval based on user's goals
+
+          NEVER generate the final JSON until all required parameters are confirmed.
+          Always verify the final parameters match user's intent.
+
+          API Endpoint Usage:
+          1. /api/tools/get-pairs: Retrieve available trading pairs when user requests pair information.
+          2. /api/tools/get-pair-prices: Get current prices of trading pairs when user requests price information.
+          3. /api/tools/create-dca: Create a new DCA plan when user provides all necessary parameters.
+          4. /api/tools/my-dca-vaults: Retrieve user's DCA vaults when requested.
+          5. /api/tools/close-dca: Close a specified DCA strategy only when user explicitly requests it. Ensure vaultId is verified.
+          6. /api/tools/claim-dca: Claim rewards from a DCA vault when user requests it.
+          7. /api/tools/my-assets: Retrieve user's token assets when requested.
+
+          General Rules:
+          - All API calls must use parameters obtained from the server.
+          - Do not construct or modify transaction parameters independently.
+          - Ensure all parameters are verified before proceeding with any transaction.
+        `,
         tools: [
           {
             type: 'generate-transaction',
@@ -120,7 +102,7 @@ export async function GET() {
         get: {
           operationId: 'get-pairs',
           summary: 'Get Available Trading Pairs',
-          description: 'Retrieve list of available trading pairs. Can filter by type.',
+          description: 'Retrieve a list of available trading pairs. Can filter by type.',
           parameters: [
             {
               name: 'type',
@@ -315,7 +297,7 @@ export async function GET() {
         get: {
           operationId: 'get-pair-prices',
           summary: 'Get Prices of Trading Pairs',
-          description: 'Retrieve the current prices of all trading pairs',
+          description: 'Retrieve the current prices of all trading pairs.',
           parameters: [
             {
               name: 'pairIds',
@@ -323,7 +305,7 @@ export async function GET() {
               required: false,
               schema: {
                 type: 'string',
-                description: 'Comma-separated list of pair IDs to retrieve prices for',
+                description: 'Comma-separated list of pair IDs to retrieve prices for.',
               },
             },
           ],
@@ -373,6 +355,7 @@ export async function GET() {
       '/api/tools/create-dca': {
         post: {
           operationId: 'get-dca-transactions',
+          summary: 'Create DCA Plan',
           description:
             'Get transaction payloads for creating a DCA (Dollar Cost Averaging) plan. Returns the transaction information that needs to be signed.',
           parameters: [
@@ -530,10 +513,7 @@ export async function GET() {
                   schema: {
                     type: 'object',
                     properties: {
-                      error: {
-                        type: 'string',
-                        description: 'The error message',
-                      },
+                      error: { type: 'string', description: 'The error message' },
                     },
                   },
                 },
@@ -649,7 +629,8 @@ export async function GET() {
         post: {
           operationId: 'close-dca',
           summary: 'Close DCA Strategy',
-          description: 'Close a specified DCA vault',
+          description:
+            'Close a specified DCA vault. This operation requires a valid vaultId and should only be performed when explicitly requested by the user.',
           parameters: [
             {
               name: 'vaultId',
@@ -658,7 +639,7 @@ export async function GET() {
               schema: {
                 type: 'string',
               },
-              description: 'The ID of the DCA vault to close',
+              description: 'The ID of the DCA vault to close. Must be verified before proceeding.',
             },
           ],
           responses: {
@@ -698,7 +679,7 @@ export async function GET() {
         post: {
           operationId: 'claim-dca',
           summary: 'Claim DCA Rewards',
-          description: 'Claim rewards from a specified DCA vault',
+          description: 'Claim rewards from a specified DCA vault. Requires a valid vaultId.',
           parameters: [
             {
               name: 'vaultId',
@@ -707,7 +688,7 @@ export async function GET() {
               schema: {
                 type: 'string',
               },
-              description: 'The ID of the DCA vault to claim rewards from',
+              description: 'The ID of the DCA vault to claim rewards from.',
             },
           ],
           responses: {
@@ -747,7 +728,7 @@ export async function GET() {
         get: {
           operationId: 'get-my-assets',
           summary: 'Get User Token Assets',
-          description: 'Retrieve the list of token assets for the current user',
+          description: 'Retrieve the list of token assets for the current user.',
           parameters: [
             {
               name: 'detail',
@@ -757,7 +738,7 @@ export async function GET() {
                 type: 'boolean',
                 default: false,
               },
-              description: 'Whether to return detailed asset information',
+              description: 'Whether to return detailed asset information.',
             },
           ],
           responses: {
@@ -790,10 +771,7 @@ export async function GET() {
                         type: 'object',
                         properties: {
                           summary: { type: 'string' },
-                          formatted_assets: {
-                            type: 'array',
-                            items: { type: 'string' },
-                          },
+                          formatted_assets: { type: 'array', items: { type: 'string' } },
                         },
                       },
                     },
